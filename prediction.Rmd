@@ -32,7 +32,7 @@ dim(isna_training)
 dim(isna_testing)
 ```
 
-```{r, cache = TRUE, echo = FALSE}
+```{r, echo = FALSE}
 setwd("C:/Users/Dell/Downloads")
 trim_training <- read.csv("pml-training.csv",na.strings=c("", "NA", "NULL"))
 trim_testing <- read.csv("pml-testing.csv",na.strings=c("", "NA", "NULL"))
@@ -71,24 +71,32 @@ There is a total 11,776 samples and 52 variables for training while 7,846 sample
 
 ## Predictive Modelling
 
-We use k-fold cross validation which is executed 4 times on a 10 fold data that begins with the 70% of training data and 30% testing data. 
+We will be using Random Forest method and use k-fold cross validation which is executed 4 times on a 10 fold data that begins with the 60% of training data and 40% testing data. 
 ```{r, eval = FALSE}
 tControl <- trainControl(method = "repeatedcv", number = 10, repeats = 4)
 tModel <- train(classe ~ ., data = training,
                 method = "rf", ntree = 10, trControl = tControl)
+ 
+prediction <- predict(tModel, testing)
+confusionMatrix(testing$classe, prediction)
 
-confusionMatrix(tModel, newdata = predict(tModel, newdata = testing))
+# out-of-sample error rate
+error <- 1 - as.numeric(confusionMatrix(testing$classe, prediction)$overall[1])
+error
 ```
 
 ```{r, echo = FALSE}
 tControl <- trainControl(method = "repeatedcv", number = 10, repeats = 4)
 tModel <- train(classe ~ ., data = training,
                 method = "rf", ntree = 10, trControl = tControl)
-
-confusionMatrix(tModel, newdata = predict(tModel, newdata = testing))
+ 
+prediction <- predict(tModel, testing)
+confusionMatrix(testing$classe, prediction)
+error <- 1 - as.numeric(confusionMatrix(testing$classe, prediction)$overall[1]) 
+error
 ```
 
-Based on the result of confusionMatrix, 0.99 means an accurate estimate.
+Based on the result of confusionMatrix, the accuracy of the model is 98.59% which makes it very accurate. The estimated out-of-sample error rate is 1.41%.
 
 ## Conclusion
 
@@ -97,3 +105,5 @@ We can now predict the testing data from the website.
 ```{r}
 predict(tModel, isna_testing)
 ```
+
+

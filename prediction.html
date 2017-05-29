@@ -163,16 +163,21 @@ dim(testing)</code></pre>
 <pre><code>## Loading required package: ggplot2</code></pre>
 <pre><code>## [1] 11776    52</code></pre>
 <pre><code>## [1] 7846   52</code></pre>
-<p>There is a total 11776 samples and 52 variables for training while 7846 samples and 52 variables for testing.</p>
+<p>There is a total 11,776 samples and 52 variables for training while 7,846 samples and 52 variables for testing.</p>
 </div>
 <div id="predictive-modelling" class="section level2">
 <h2>Predictive Modelling</h2>
-<p>We use k-fold cross validation which is executed 4 times on a 10 fold data that begins with the 70% of training data and 30% testing data.</p>
+<p>We will be using Random Forest method and use k-fold cross validation which is executed 4 times on a 10 fold data that begins with the 60% of training data and 40% testing data.</p>
 <pre class="r"><code>tControl &lt;- trainControl(method = &quot;repeatedcv&quot;, number = 10, repeats = 4)
 tModel &lt;- train(classe ~ ., data = training,
                 method = &quot;rf&quot;, ntree = 10, trControl = tControl)
+ 
+prediction &lt;- predict(tModel, testing)
+confusionMatrix(testing$classe, prediction)
 
-confusionMatrix(tModel, newdata = predict(tModel, newdata = testing))</code></pre>
+# out-of-sample error rate
+error &lt;- 1 - as.numeric(confusionMatrix(testing$classe, prediction)$overall[1])
+error</code></pre>
 <pre><code>## Loading required package: randomForest</code></pre>
 <pre><code>## randomForest 4.6-12</code></pre>
 <pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
@@ -181,20 +186,39 @@ confusionMatrix(tModel, newdata = predict(tModel, newdata = testing))</code></pr
 <pre><code>## The following object is masked from 'package:ggplot2':
 ## 
 ##     margin</code></pre>
-<pre><code>## Cross-Validated (10 fold, repeated 4 times) Confusion Matrix 
+<pre><code>## Confusion Matrix and Statistics
 ## 
-## (entries are percentual average cell counts across resamples)
-##  
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 28.3  0.3  0.0  0.0  0.0
-##          B  0.1 18.8  0.2  0.0  0.0
-##          C  0.0  0.2 17.1  0.3  0.1
-##          D  0.0  0.0  0.1 16.0  0.1
-##          E  0.0  0.0  0.0  0.0 18.1
-##                             
-##  Accuracy (average) : 0.9834</code></pre>
-<p>Based on the result of confusionMatrix, 0.99 means an accurate estimate.</p>
+##          A 2224    6    0    1    1
+##          B   25 1481    8    3    1
+##          C    0   20 1337   11    0
+##          D    0    1   18 1263    4
+##          E    0    4    3    5 1430
+## 
+## Overall Statistics
+##                                          
+##                Accuracy : 0.9859         
+##                  95% CI : (0.983, 0.9883)
+##     No Information Rate : 0.2866         
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16      
+##                                          
+##                   Kappa : 0.9821         
+##  Mcnemar's Test P-Value : NA             
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9889   0.9795   0.9788   0.9844   0.9958
+## Specificity            0.9986   0.9942   0.9952   0.9965   0.9981
+## Pos Pred Value         0.9964   0.9756   0.9773   0.9821   0.9917
+## Neg Pred Value         0.9955   0.9951   0.9955   0.9970   0.9991
+## Prevalence             0.2866   0.1927   0.1741   0.1635   0.1830
+## Detection Rate         0.2835   0.1888   0.1704   0.1610   0.1823
+## Detection Prevalence   0.2845   0.1935   0.1744   0.1639   0.1838
+## Balanced Accuracy      0.9937   0.9868   0.9870   0.9905   0.9970</code></pre>
+<pre><code>## [1] 0.01414734</code></pre>
+<p>Based on the result of confusionMatrix, the accuracy of the model is 98.59% which makes it very accurate. The estimated out-of-sample error rate is 1.41%.</p>
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
