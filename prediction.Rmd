@@ -1,0 +1,99 @@
+---
+title: " Prediction Assignment Writeup"
+author: "pvv88"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Overview
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: [http://groupware.les.inf.puc-rio.br/har](http://groupware.les.inf.puc-rio.br/har)
+
+## Data Processing
+Download the files from groupware\@LES website and remove columns that contains NA
+```{r, eval = FALSE}
+setwd("C:/Users/Dell/Downloads")
+training <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testing <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+download.file(training,'pml-training.csv')
+download.file(testing,'pml-testing.csv')
+
+# converts empty and NULL values to NA 
+trim_training <- read.csv("pml-training.csv",na.strings=c("", "NA", "NULL"))
+trim_testing <- read.csv("pml-testing.csv",na.strings=c("", "NA", "NULL"))
+# remove columns that contains NA
+isna_training <- trim_training[,colSums(is.na(trim_training)) == 0] 
+isna_training <- isna_training[,-c(1:8)]
+isna_testing <- trim_testing[,colSums(is.na(trim_testing)) == 0]
+isna_testing <- isna_testing[,-c(1:8)]
+dim(isna_training)
+dim(isna_testing)
+```
+
+```{r, cache = TRUE, echo = FALSE}
+setwd("C:/Users/Dell/Downloads")
+trim_training <- read.csv("pml-training.csv",na.strings=c("", "NA", "NULL"))
+trim_testing <- read.csv("pml-testing.csv",na.strings=c("", "NA", "NULL"))
+isna_training <- trim_training[,colSums(is.na(trim_training)) == 0] 
+isna_training <- isna_training[,-c(1:8)]
+isna_testing <- trim_testing[,colSums(is.na(trim_testing)) == 0]
+isna_testing <- isna_testing[,-c(1:8)]
+dim(isna_training)
+dim(isna_testing)
+```
+
+## Dataset Partitioning
+Now that the data is clean, we will be splitting the training and testing for cross validation. The split will be at 60% for the training and 40% for the testing. This will allow us to estimate the out of sample error from our predictor.
+```{r, eval = FALSE}
+set.seed(10000)
+library(caret)
+# set 60% partition for training
+inTrain <- createDataPartition(isna_training$classe, p=0.6, list=FALSE)
+training <- isna_training[inTrain,]
+# set 40% partition for testing
+testing <- isna_training[-inTrain,]
+dim(training)
+dim(testing)
+```
+
+```{r, echo = FALSE}
+set.seed(10000)
+library(caret)
+inTrain <- createDataPartition(isna_training$classe, p=0.6, list=FALSE)
+training <- isna_training[inTrain,]
+testing <- isna_training[-inTrain,]
+dim(training)
+dim(testing)
+```
+There is a total 11,776 samples and 52 variables for training while 7,846 samples and 52 variables for testing.
+
+## Predictive Modelling
+
+We use k-fold cross validation which is executed 4 times on a 10 fold data that begins with the 70% of training data and 30% testing data. 
+```{r, eval = FALSE}
+tControl <- trainControl(method = "repeatedcv", number = 10, repeats = 4)
+tModel <- train(classe ~ ., data = training,
+                method = "rf", ntree = 10, trControl = tControl)
+
+confusionMatrix(tModel, newdata = predict(tModel, newdata = testing))
+```
+
+```{r, echo = FALSE}
+tControl <- trainControl(method = "repeatedcv", number = 10, repeats = 4)
+tModel <- train(classe ~ ., data = training,
+                method = "rf", ntree = 10, trControl = tControl)
+
+confusionMatrix(tModel, newdata = predict(tModel, newdata = testing))
+```
+
+Based on the result of confusionMatrix, 0.99 means an accurate estimate.
+
+## Conclusion
+
+We can now predict the testing data from the website.
+
+```{r}
+predict(tModel, isna_testing)
+```
